@@ -1,22 +1,7 @@
-module Audiogram exposing (Model)
+module Audiogram exposing (main)
 
 import Browser
 import Html exposing (..)
-import Json.Decode as Decode
-  exposing (Decoder
-           , Decoder
-           , Error(..)
-           , map3
-           , decodeValue
-           , field
-           , maybe
-           , decodeString
-           , int
-           , list
-           , float
-           , string
-           , nullable
-           , bool)
 import Svg as S exposing (Svg, svg, line, text) 
 import Svg.Attributes exposing (x
                                , y
@@ -31,50 +16,21 @@ import Svg.Attributes exposing (x
                                , height
                                , width)
 
+import Audiogram.Types
+  exposing (..)
 
-type alias DataPoint =
-  { frequency : Float
-  , masking : Maybe Bool
-  , level : Int
-  }
-  
-type alias Audiogram =
-  { ear : String
-  , conduction : String
-  , data : List DataPoint
-  }
+import Audiogram.DataParser
+  exposing ( decode )
 
-type alias GraphSpec =
-  { height: Maybe Int
-  , width: Maybe Int
-  , inverted_freqscale: Maybe Bool
-  }
+import Audiogram.Constants
+  exposing ( svgGraphSpec )
 
--- represents height, width, inverted
-type alias Spec =
-  (Int, Int, Bool)
-  
-type alias Model =
-  (GraphSpec, List Audiogram)
 
-type YAxisType
-  = Major (List Float)
-  | Minor (List Float)
-    
+{--------------------------------------------------------------------------}    
 
 init : () -> ( Model, Cmd msg )
 init _ =
-  let
-    spec =
-      case (decodeString graphDecoder testdata) of
-        Ok gspec -> gspec
-        Err _    -> GraphSpec Nothing Nothing Nothing
-    data =
-      case (decodeString audiogramDataDecoder testdata) of
-        Ok adata -> adata
-        Err _    -> []
-  in                    
-    ( (spec, data), Cmd.none )
+  ( Audiogram.DataParser.decode testdata, Cmd.none )
 
       
 view : Model -> Html msg
@@ -88,6 +44,24 @@ view (graphSpec, audiogramData) =
         ]
       (adMajorGraph spec)
 
+        
+update : msg -> Model -> ( Model, Cmd msg )
+update msg model =
+  ( model, Cmd.none )
+
+    
+main : Program () Model msg
+main =
+  Browser.element
+    { init = init
+    , view = view
+    , update = update
+    , subscriptions = \_ -> Sub.none
+    }
+
+{--------------------------------------------------------------------------}    
+
+    
 adMajorGraph : Spec -> List (Svg msg)
 adMajorGraph ((height, width, isInverted) as spec) =
   let
@@ -124,66 +98,6 @@ axisLabelStyle : String
 axisLabelStyle =
   "font-size: larger; font-family: sans-serif; text-anchor: middle;"  
     
-update : msg -> Model -> ( Model, Cmd msg )
-update msg model =
-  ( model, Cmd.none )
-
-    
-main : Program () Model msg
-main =
-  Browser.element
-    { init = init
-    , view = view
-    , update = update
-    , subscriptions = \_ -> Sub.none
-    }
-
-{-- Graph Parameters --}
-defaultSvgHeight : Int
-defaultSvgHeight = 480
-
-defaultSvgWidth : Int
-defaultSvgWidth = 660
-
-svgGraphSpec : GraphSpec -> Spec
-svgGraphSpec spec =
-  ((case spec.height of
-      Just h -> h
-      Nothing -> defaultSvgHeight)
-  , (case spec.width of
-       Just w -> w
-       Nothing -> defaultSvgWidth)
-  , (case spec.inverted_freqscale of
-       Just i -> i
-       Nothing -> False))
-               
-               
-{-- JSON decoders --}
-graphDecoder : Decoder GraphSpec
-graphDecoder =
-  map3 GraphSpec
-    (field "height" (maybe int))
-    (field "width" (maybe int))
-    (field "inverted_freqscale" (maybe bool))
-
-audiogramDataDecoder : Decoder (List Audiogram)
-audiogramDataDecoder =
-  (field "audiograms" (list audiogramDecoder))
-               
-audiogramDecoder : Decoder Audiogram
-audiogramDecoder =
-  map3 Audiogram
-    (field "ear" string)
-    (field "conduction" string)
-    (field "data" (list dataPointDecoder))
-
-dataPointDecoder : Decoder DataPoint
-dataPointDecoder =
-  map3 DataPoint
-    (field "f" float)
-    (maybe (field "m" bool))
-    (field "db" int)
-
 
       
 {-- X Axis (Hz) Ticks/Labels ------------------------------------------------}
@@ -466,7 +380,7 @@ testdata =
   """
 { \"width\": 660,
   \"height\": 480,
-  \"inverted_freqscale\": true,
+  \"inverted_level\": true,
 
   \"audiograms\": [
     {
