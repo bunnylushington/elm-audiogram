@@ -1,13 +1,4 @@
-module Audiogram exposing (Model
-                          , audiogramDataDecoder
-                          , audiogramDecoder
-                          , dataPointDecoder
-                          , xaxisLabels
-                          , yaxisLabels
-                          , testdata
-                          , Audiogram
-                          , YAxisType (..)
-                          , DataPoint)
+module Audiogram exposing (Model)
 
 import Browser
 import Html exposing (..)
@@ -59,6 +50,7 @@ type alias GraphSpec =
   , inverted_freqscale: Maybe Bool
   }
 
+-- represents height, width, inverted
 type alias Spec =
   (Int, Int, Bool)
   
@@ -66,8 +58,8 @@ type alias Model =
   (GraphSpec, List Audiogram)
 
 type YAxisType
-  = Major
-  | Minor
+  = Major (List Float)
+  | Minor (List Float)
     
 
 init : () -> ( Model, Cmd msg )
@@ -92,18 +84,17 @@ view (graphSpec, audiogramData) =
   in
     svg [ height (String.fromInt graphHeight)
         , width (String.fromInt graphWidth)
-        , style "border: 1px solid"
+        , style ""
         ]
       (adMajorGraph spec)
-      
---    [ line [ x1 "80", y1 "400", x2 "640", y2 "400", stroke "black" ] []]
-
 
 adMajorGraph : Spec -> List (Svg msg)
 adMajorGraph ((height, width, isInverted) as spec) =
   let
     yTickX1 = 80
-    yTickX2 = width - 40
+    yTickX2 = maxXOffset spec
+    xTickY1 = height - 80
+    xTickY2 = maxYOffset spec
 
   in
         
@@ -121,10 +112,8 @@ adMajorGraph ((height, width, isInverted) as spec) =
              , style axisLabelStyle
              , class "axis-label"
              ] [ text "Frequency (Hz)" ])
-  ] ++ 
-
-   (yAxisSVG yTickX1 yTickX2 yaxisLabels spec)
-
+  ] ++ (yAxisSVG yTickX1 yTickX2 yaxisLabels spec)
+    ++ (xAxisSVG xTickY1 xTickY2 majorXAxisLabels spec)
 
 
 xAxisLabelY : Int -> Int
@@ -197,7 +186,7 @@ dataPointDecoder =
 
 
       
-{-- X Axis (Hz) Labels --}
+{-- X Axis (Hz) Ticks/Labels ------------------------------------------------}
 xaxisMajorMin : Float
 xaxisMajorMin = 0.125
 
@@ -210,15 +199,51 @@ xaxisMinorMin = 0.75
 xaxisMinorCnt : Int                
 xaxisMinorCnt = 5
 
-xaxisLabels : YAxisType -> List Float
-xaxisLabels axisType =
-  case axisType of
-    Major ->
-      genXAxisLabels (xaxisMajorCnt, xaxisMajorMin) []
+xaxisMajorTickStyle : String                
+xaxisMajorTickStyle = "stroke: black;"
 
-    Minor ->
-      genXAxisLabels (xaxisMinorCnt, xaxisMinorMin) []
+xaxisMinorTickStyle : String
+xaxisMinorTickStyle = "stroke: #ccc; stroke-dasharray: 2,5"
+
+xaxisMajorTickLabelStyle : String
+xaxisMajorTickLabelStyle =
+  "font-family: monospace; text-anchor: end; text-anchor: middle;"
+
+xaxisMinorTickLabelStyle : String
+xaxisMinorTickLabelStyle =
+  "font-family: monospace; font-size: smaller; text-anchor: middle;"
+
+
+maxXOffset : Spec -> Int
+maxXOffset (_, width, _) =
+  let
+    -- XXX: this is weird.  i like that the labels type is tagged
+    -- Major | Minor (we use that distinction elsewhere) but here we
+    -- *know* that the type will be tagged Major.  is there a way to
+    -- specify the return value of majorXAxisLabels more specifically?
+    ticks = case majorXAxisLabels of
+              (Major t) -> t
+              (Minor t) -> t
+    
+    offset =
+      80 -- distance from x origin to first x tick
+            
+    tickCount =
+      List.length ticks -- number of ticks
                 
+    interval =
+      (width - 80) // tickCount -- distance between ticks
+  in
+    ((tickCount - 1) * interval) + offset
+
+                
+majorXAxisLabels : YAxisType
+majorXAxisLabels =
+  Major (genXAxisLabels (xaxisMajorCnt, xaxisMajorMin) [])
+
+minorXAxisLabels : YAxisType
+minorXAxisLabels =
+  Minor (genXAxisLabels (xaxisMinorCnt, xaxisMinorMin) [])
       
 genXAxisLabels : (Int, Float) -> (List Float) -> (List Float)
 genXAxisLabels (count, initialTick) ticks =
@@ -230,7 +255,6 @@ genXAxisLabels (count, initialTick) ticks =
       (genXAxisLabels
          ((count - 1), initialTick)
          ((newXTickLabel ticks initialTick) :: ticks))
-
         
 newXTickLabel : (List Float) -> Float -> Float
 newXTickLabel ticks initialTick =
@@ -238,17 +262,117 @@ newXTickLabel ticks initialTick =
     Nothing -> initialTick
     Just x -> x * 2
 
-              
-{-- Y Axis (dB) Labels --}
+xAxisSVG : Int -> Int -> YAxisType -> Spec -> List (Svg msg)
+xAxisSVG xTickY1 xTickY2 labels spec =
+  case labels of
+    Major ls ->
+      xAxisSVGMajorTicks xTickY1 xTickY2 ls spec
+    Minor ls ->
+      xAxisSVGMinorTicks xTickY1 xTickY2 ls spec
+
+
+type alias XAxisTickVals =
+  { labels : (List Float)
+  , xValue : Int
+  , tickIncrement : Int
+  , xTickY1 : Int
+  , xTickY2 : Int
+  , labelOffsetPX : Int
+  , tickStyle : String
+  , labelStyle : String }
+        
+xAxisSVGMajorTicks : Int -> Int -> (List Float) -> Spec -> List (Svg msg)
+xAxisSVGMajorTicks xTickY1 xTickY2 labels ((height, width, _) as spec) =
+  let
+    initialTick =
+      80
+
+    tickIncrement =
+      (width - initialTick) // List.length labels
+
+    offset =
+      (height - 50)
+        
+    xVals =
+      (XAxisTickVals labels initialTick tickIncrement xTickY1 xTickY2 offset
+         xaxisMajorTickStyle xaxisMajorTickLabelStyle)
+
+  in
+    xAxisTick xVals []
+
+xAxisSVGMinorTicks : Int -> Int -> (List Float) -> Spec -> List (Svg msg)
+xAxisSVGMinorTicks xTickY1 xTickY2 labels ((heigh, width, _) as spec) =
+  []
+
+xAxisTick : XAxisTickVals -> List (Svg msg) -> List (Svg msg)
+xAxisTick vals acc =
+  case (List.head vals.labels) of
+    Nothing ->
+      acc
+
+    Just label ->
+      let
+        newLine =
+          line [ y1 (String.fromInt vals.xTickY1)
+               , y2 (String.fromInt vals.xTickY2)
+               , x1 (String.fromInt vals.xValue)
+               , x2 (String.fromInt vals.xValue)
+               , style vals.tickStyle
+               ][]
+
+        newText =
+          S.text_ [ y (String.fromInt vals.labelOffsetPX)
+                  , x (String.fromInt vals.xValue)
+                  , style vals.labelStyle
+                  ] [ (text (String.fromFloat label)) ]
+
+        newAcc =
+          newLine :: newText :: acc
+
+        newVals = { vals
+                    | labels = case (List.tail vals.labels) of
+                                 Nothing -> []
+                                 Just rest -> rest
+                      , xValue = vals.xValue + vals.tickIncrement
+                  }
+      in
+        xAxisTick newVals newAcc
+
+    
+{-- Y Axis (dB) Ticks/Labels ------------------------------------------------}
+yaxisMin : Int
 yaxisMin = -10
+
+yaxisMax : Int           
 yaxisMax = 160
 
+yaxisTickStyle : String           
 yaxisTickStyle = "stroke: black;"
 
+yaxisTickLabelPX : Int                 
 yaxisTickLabelPX = 60
+
+yaxisTickLabelStyle : String                   
 yaxisTickLabelStyle =
   "font-family: monospace; text-anchor: end; dominant-baseline: middle"
-           
+
+
+maxYOffset : Spec -> Int
+maxYOffset (height, _, _) =
+  let
+    tickCount =
+      List.length yaxisLabels
+
+    offset =
+      80
+
+    interval =
+      (height - 80) // tickCount
+
+  in
+    height - (((tickCount - 1) * interval) + offset)
+
+    
 yaxisLabels : List Int
 yaxisLabels =
   let
@@ -286,6 +410,19 @@ yAxisSVG yTickX1 yTickX2 labels ((height, width, isInverted) as spec) =
   in
     yAxisTick yVals []
 
+-- Recursively build some y-axis tick marks (line) and labels (text_).
+-- The initial tick is based on the SVG height minus a number of px
+-- based on emperical testing (that number is 80px which accounts for
+-- space for the "Frequency" label as well as room for x-axis tick
+-- labels.  The decrement (we're building from the bottom up) value is
+-- 
+--   (SVG height -  initial tick height) // # of y-axis ticks
+--
+-- The x1 and x2 values for all of the y-axis ticks are consistent.
+--
+-- We're using the YAxisTickVals as a documentation aid (so many
+-- arguments is a mess to work with, passing along a structure is a
+-- big help); there's nothing special about it though.
 
 yAxisTick : YAxisTickVals -> List (Svg msg) -> List (Svg msg)
 yAxisTick vals acc =
@@ -323,7 +460,7 @@ yAxisTick vals acc =
         yAxisTick newVals newAcc
       
     
-{-- testing artifacts --}
+{-- testing artifacts -------------------------------------------------------}
 testdata : String
 testdata =
   """
