@@ -43,7 +43,7 @@ view (graphSpec, audiogramData) =
   in
     svg [ height (String.fromInt graphHeight)
         , width (String.fromInt graphWidth)
-        , style ""
+        , style "border: solid 1px"
         ]
       (majorGraph spec)
 

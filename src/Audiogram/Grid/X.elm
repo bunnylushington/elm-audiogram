@@ -3,6 +3,7 @@ module Audiogram.Grid.X
            , xAxisSVG
            , majorXAxisLabels
            , minorXAxisLabels
+           , xAxisLabelOffset
            )
 
 import Svg as S
@@ -30,7 +31,15 @@ import Svg.Attributes
 import Audiogram.Constants exposing (..)
 import Audiogram.Types exposing (..)
 
+-- center (more or less) the x-axis label    
+xAxisLabelOffset : Spec -> Int
+xAxisLabelOffset ((_, width, _) as spec) =
+  let
+    (xOrigin, _) = graphOrigin spec
+  in
+    (maxOffset spec - xOrigin) // 2
 
+      
 -- Represents the right edge of the x-axis in px.  This value may not
 -- be the full width of the SVG because we've divided up the area in
 -- integer intervals based on how many frequencies (x-axis ticks) are
@@ -58,12 +67,12 @@ maxOffset (_, width, _) =
     ((tickCount - 1) * interval) + offset
 
                 
-majorXAxisLabels : YAxisType
+majorXAxisLabels : XAxisType
 majorXAxisLabels =
   Major (genXAxisLabels (xAxisParams.majorCnt, xAxisParams.majorMin) [])
 
     
-minorXAxisLabels : YAxisType
+minorXAxisLabels : XAxisType
 minorXAxisLabels =
   Minor (genXAxisLabels (xAxisParams.minorCnt, xAxisParams.minorMin) [])
     
@@ -87,7 +96,7 @@ newTickLabel ticks initialTick =
     Just x -> x * 2
 
               
-xAxisSVG : Int -> Int -> YAxisType -> Spec -> List (Svg msg)
+xAxisSVG : Int -> Int -> XAxisType -> Spec -> List (Svg msg)
 xAxisSVG xTickY1 xTickY2 labels spec =
   case labels of
     Major labelList ->
@@ -158,10 +167,8 @@ xAxisTick vals acc =
           newLine :: newText :: acc
 
         newVals = { vals
-                    | labels = case (List.tail vals.labels) of
-                                 Nothing -> []
-                                 Just rest -> rest
-                      , xValue = vals.xValue + vals.tickIncrement
+                    | labels = Maybe.withDefault [] (List.tail vals.labels)
+                    , xValue = vals.xValue + vals.tickIncrement
                   }
       in
         xAxisTick newVals newAcc

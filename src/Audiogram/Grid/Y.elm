@@ -2,6 +2,7 @@ module Audiogram.Grid.Y
   exposing ( maxOffset
            , yAxisSVG
            , yAxisLabels
+           , yAxisLabelOffset
            )
 
 import Svg as S
@@ -30,6 +31,15 @@ import Audiogram.Constants exposing (..)
 import Audiogram.Types exposing (..)
 
 
+-- cener the y-axis label
+yAxisLabelOffset : Spec -> Int
+yAxisLabelOffset ((height, _, _) as spec) =
+  let
+    (_, yOrigin) = graphOrigin spec
+  in
+    (yOrigin // 2) * -1
+
+      
 maxOffset : Spec -> Int
 maxOffset (height, _, _) =
   let
@@ -123,9 +133,7 @@ yAxisTick vals acc =
           newLine :: newText :: acc
             
         newVals = { vals
-                    | labels = case (List.tail vals.labels) of
-                                 Nothing -> []
-                                 Just rest -> rest
+                    | labels = Maybe.withDefault [] (List.tail vals.labels)
                     , yValue = vals.yValue - vals.tickDecrement
                   }
             

@@ -10,7 +10,6 @@ module Audiogram.Constants
 
 import Audiogram.Types exposing (..)
 
-
 {-- Graph Parameters ------------------------------------------------------}
 
 -- SVG graph height (PX) if not specified
@@ -38,24 +37,10 @@ defaultInversion =
 -- unspecified.
 svgGraphSpec : GraphSpec -> Spec
 svgGraphSpec spec =
-  let
-    height =
-      case spec.height of
-        Just h -> h
-        Nothing -> defaultSvgHeight
-
-    width = 
-      case spec.width of
-        Just w -> w
-        Nothing -> defaultSvgWidth
-
-    inversion =
-      case spec.inverted_level of
-        Just i -> i
-        Nothing -> defaultInversion
-
-  in
-    (height, width, inversion)
+  ( (Maybe.withDefault defaultSvgHeight spec.height)
+  , (Maybe.withDefault defaultSvgWidth spec.width)
+  , (Maybe.withDefault defaultInversion spec.inverted_level)
+  )
 
 
 -- Since this isn't a general purpose graphing solution and making
@@ -69,10 +54,12 @@ xAxisLabelY : Spec -> Int
 xAxisLabelY (height, _, _) =
   height - 20
 
+    
 -- how far from the left to place the y axis tick labels
 yAxisTickLabelX : Int
 yAxisTickLabelX =
   60
+
 
 -- the (y, y) SVG coordinates of the origin of the graph
 graphOrigin : Spec -> (Int, Int)
@@ -83,8 +70,10 @@ graphOrigin (height, _, _) =
 -- css styling applied to the axes labels
 axisLabelStyle : String
 axisLabelStyle =
-  "font-size: larger; font-family: sans-serif; text-anchor: middle;"  
+  "font-size: larger; font-family: sans-serif; text-align: middle;"  
 
+    
+-- parameters for generating the SVG for the major and minor x axes
 xAxisParams : XAxisParams
 xAxisParams =
   ( XAxisParams
@@ -107,6 +96,7 @@ xAxisParams =
   )
 
 
+-- parameters for generating the SVG for the y axis
 yAxisParams : YAxisParams
 yAxisParams =
   ( YAxisParams
