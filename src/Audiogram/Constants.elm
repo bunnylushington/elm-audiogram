@@ -52,7 +52,7 @@ svgGraphSpec spec =
 -- label.  
 xAxisLabelY : Spec -> Int
 xAxisLabelY (height, _, _) =
-  height - 20
+  height - 15
 
     
 -- how far from the left to place the y axis tick labels
@@ -86,7 +86,7 @@ xAxisParams =
       -- minorCnt
       5
       -- majorTickStyle
-      "stroke: black;"
+      "stroke: #ccc;"
       -- minorTickStyle
       "stroke: #ccc; stroke-dasharray: 2,5"
       -- majorLabelStyle
@@ -105,7 +105,7 @@ yAxisParams =
       -- max
       160
       -- tickStyle
-      "stroke: black;"
+      "stroke: #ccc;"
       -- labelStyle
       "font-family: monospace; text-anchor: end; dominant-baseline: middle"
   )

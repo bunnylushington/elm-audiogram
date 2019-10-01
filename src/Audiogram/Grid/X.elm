@@ -40,20 +40,11 @@ xAxisLabelOffset ((_, width, _) as spec) =
     (maxOffset spec - xOrigin) // 2
 
       
--- Represents the right edge of the x-axis in px.  This value may not
--- be the full width of the SVG because we've divided up the area in
--- integer intervals based on how many frequencies (x-axis ticks) are
--- represented in the graph.
 maxOffset : Spec -> Int
 maxOffset (_, width, _) =
   let
-    -- XXX: this is weird.  i like that the labels type is tagged
-    -- Major | Minor (we use that distinction elsewhere) but here we
-    -- *know* that the type will be tagged Major.  is there a way to
-    -- specify the return value of majorXAxisLabels more specifically?
-    ticks = case majorXAxisLabels of
-              (Major t) -> t
-              (Minor t) -> t
+    ticks =
+      labelList majorXAxisLabels
     
     offset =
       80 -- distance from x origin to first x tick
@@ -66,6 +57,13 @@ maxOffset (_, width, _) =
   in
     ((tickCount - 1) * interval) + offset
 
+-- unwrap the label list from the type spec
+labelList : XAxisType -> List Float
+labelList typedLabels =
+  case typedLabels of
+    Major labels -> labels
+    Minor labels -> labels
+                    
                 
 majorXAxisLabels : XAxisType
 majorXAxisLabels =
@@ -99,10 +97,10 @@ newTickLabel ticks initialTick =
 xAxisSVG : Int -> Int -> XAxisType -> Spec -> List (Svg msg)
 xAxisSVG xTickY1 xTickY2 labels spec =
   case labels of
-    Major labelList ->
-      xAxisSVGMajorTicks xTickY1 xTickY2 labelList spec
-    Minor labelList ->
-      xAxisSVGMinorTicks xTickY1 xTickY2 labelList spec
+    Major l ->
+      xAxisSVGMajorTicks xTickY1 xTickY2 l spec
+    Minor l ->
+      xAxisSVGMinorTicks xTickY1 xTickY2 l spec
 
 
 type alias XAxisTickVals =
@@ -136,9 +134,45 @@ xAxisSVGMajorTicks xTickY1 xTickY2 labels ((height, width, _) as spec) =
     xAxisTick xVals []
 
       
-xAxisSVGMinorTicks : Int -> Int -> (List Float) -> Spec -> List (Svg msg)
-xAxisSVGMinorTicks xTickY1 xTickY2 labels ((heigh, width, _) as spec) =
-  []
+xAxisSVGMinorTicks : Int -> Int -> List Float -> Spec -> List (Svg msg)
+xAxisSVGMinorTicks xTickY1 xTickY2 minorLabels ((height, width, _) as spec) =
+  let
+    majorLabels =
+      labelList majorXAxisLabels
+    
+    initialTick =
+      80
+
+    tickIncrement =
+      (width - initialTick) // List.length majorLabels
+
+    offset =
+      (height - 40)
+
+    firstMinorTick =
+      minorTickOffset majorLabels minorLabels initialTick tickIncrement
+
+    xVals =
+      (XAxisTickVals minorLabels firstMinorTick tickIncrement xTickY1 xTickY2
+         offset xAxisParams.minorTickStyle xAxisParams.majorLabelStyle)
+
+  in
+    xAxisTick xVals []
+
+
+minorTickOffset : List Float -> List Float -> Int -> Int -> Int
+minorTickOffset majorLabels minorLabels initialTick tickIncrement =
+  let
+    firstMinorTick =
+      Maybe.withDefault 0 (List.head minorLabels)
+
+    accumulatedMajorTicks =
+      (List.length (List.filter (\x -> x < firstMinorTick) majorLabels)) - 1
+        
+  in
+    initialTick + (accumulatedMajorTicks * tickIncrement) + (tickIncrement // 2)
+    
+        
 
     
 xAxisTick : XAxisTickVals -> List (Svg msg) -> List (Svg msg)

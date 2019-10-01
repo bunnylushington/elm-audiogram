@@ -45,7 +45,9 @@ view (graphSpec, audiogramData) =
         , width (String.fromInt graphWidth)
         , style "border: solid 1px"
         ]
-      (majorGraph spec)
+      ( (majorGraph spec)
+         ++ (minorGraph spec)
+      )
 
         
 update : msg -> Model -> ( Model, Cmd msg )
