@@ -30,11 +30,14 @@ majorGraph ((height, width, isInverted) as spec) =
   let
     st =
       staticTicks spec
+
+    (xMajSVG, _) =
+      X.xAxisSVG st.xTickY1 st.xTickY2 X.majorXAxisLabels spec
   in
     List.concat
       [ [yAxisLabel spec]
       , [xAxisLabel spec]
-      , X.xAxisSVG st.xTickY1 st.xTickY2 X.majorXAxisLabels spec
+      , xMajSVG
       , Y.yAxisSVG st.yTickX1 st.yTickX2 Y.yAxisLabels spec
       ]
 
@@ -45,9 +48,12 @@ minorGraph ((height, width, isInverted) as spec) =
   let
     st =
       staticTicks spec
-  in
-    X.xAxisSVG st.xTickY1 st.xTickY2 X.minorXAxisLabels spec
 
+    (xMinSVG, _) =
+      X.xAxisSVG st.xTickY1 st.xTickY2 X.minorXAxisLabels spec  
+  in
+    xMinSVG
+    
 
       
 -- StaticTicks!  (admittedly the name is awful) what we mean here is

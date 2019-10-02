@@ -35,7 +35,7 @@ decode jsonString =
         Err _    -> GraphSpec Nothing Nothing Nothing
     data =
       case (decodeString audiogramDataDecoder jsonString) of
-        Ok adata -> adata |> List.map asPlotPoints
+        Ok adata -> List.map asPlotPoints adata
         Err _    -> []
                     
     _ =

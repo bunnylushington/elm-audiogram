@@ -93,8 +93,15 @@ newTickLabel ticks initialTick =
     Nothing -> initialTick
     Just x -> x * 2
 
-              
-xAxisSVG : Int -> Int -> XAxisType -> Spec -> List (Svg msg)
+
+
+-- xAxisSVG performs two functions: it generates a list of SVG
+-- messages that describe the xaxis (major or minor) tick lines and
+-- labels; it also generates a list of tuples, the XLookupTuple, that
+-- can be used to map frequencies (floats) to SVG canvas position (px
+-- as a int)  
+xAxisSVG : Int -> Int -> XAxisType -> Spec
+         -> (List (Svg msg), List XLookupTuple)
 xAxisSVG xTickY1 xTickY2 labels spec =
   case labels of
     Major l ->
@@ -114,7 +121,8 @@ type alias XAxisTickVals =
   , labelStyle : String }
 
   
-xAxisSVGMajorTicks : Int -> Int -> (List Float) -> Spec -> List (Svg msg)
+xAxisSVGMajorTicks : Int -> Int -> (List Float) -> Spec
+                   -> (List (Svg msg), List XLookupTuple)
 xAxisSVGMajorTicks xTickY1 xTickY2 labels ((height, width, _) as spec) =
   let
     initialTick =
@@ -131,10 +139,11 @@ xAxisSVGMajorTicks xTickY1 xTickY2 labels ((height, width, _) as spec) =
          xAxisParams.majorTickStyle xAxisParams.majorLabelStyle)
 
   in
-    xAxisTick xVals []
+    xAxisTick xVals ([], [])
 
       
-xAxisSVGMinorTicks : Int -> Int -> List Float -> Spec -> List (Svg msg)
+xAxisSVGMinorTicks : Int -> Int -> List Float -> Spec
+                   -> (List (Svg msg), List XLookupTuple)
 xAxisSVGMinorTicks xTickY1 xTickY2 minorLabels ((height, width, _) as spec) =
   let
     majorLabels =
@@ -157,7 +166,7 @@ xAxisSVGMinorTicks xTickY1 xTickY2 minorLabels ((height, width, _) as spec) =
          offset xAxisParams.minorTickStyle xAxisParams.majorLabelStyle)
 
   in
-    xAxisTick xVals []
+    xAxisTick xVals ([], [])
 
 
 minorTickOffset : List Float -> List Float -> Int -> Int -> Int
@@ -168,20 +177,18 @@ minorTickOffset majorLabels minorLabels initialTick tickIncrement =
 
     accumulatedMajorTicks =
       (List.length (List.filter (\x -> x < firstMinorTick) majorLabels)) - 1
-
-    
         
   in
     initialTick + (accumulatedMajorTicks * tickIncrement) + (tickIncrement // 2)
     
         
-
-    
-xAxisTick : XAxisTickVals -> List (Svg msg) -> List (Svg msg)
-xAxisTick vals acc =
+xAxisTick : XAxisTickVals
+          -> (List (Svg msg), List XLookupTuple)
+          -> (List (Svg msg), List XLookupTuple)
+xAxisTick vals (acc, lookups) =
   case (List.head vals.labels) of
     Nothing ->
-      acc
+      (acc, lookups)
 
     Just label ->
       let
@@ -206,6 +213,11 @@ xAxisTick vals acc =
                     | labels = Maybe.withDefault [] (List.tail vals.labels)
                     , xValue = vals.xValue + vals.tickIncrement
                   }
+
+        newLookups =
+          (label, vals.xValue) :: lookups
+
+          
       in
-        xAxisTick newVals newAcc
+        xAxisTick newVals (newAcc, newLookups)
       

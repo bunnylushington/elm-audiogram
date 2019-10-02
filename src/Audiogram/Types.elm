@@ -11,6 +11,7 @@ module Audiogram.Types
            , Conduction (..)
            , Masking (..)
            , PlotPoint
+           , XLookupTuple
            )
 
 
@@ -93,3 +94,11 @@ type alias YAxisParams =
   , tickStyle : String          -- css styling for tick
   , labelStyle : String         -- css styling for label
   }
+
+
+-- a tuple describing an xaxis (float) value and the integer px
+-- position where that xaxis tick mark resides; a list of these is
+-- generated while we're generating the tick marks.  frequencies are
+-- fixed, so no math required.
+type alias XLookupTuple =
+  (Float, Int)
