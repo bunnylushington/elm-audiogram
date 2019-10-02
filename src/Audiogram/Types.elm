@@ -7,22 +7,26 @@ module Audiogram.Types
            , XAxisType (..)
            , XAxisParams
            , YAxisParams
+           , Ear (..)
+           , Conduction (..)
+           , Masking (..)
+           , PlotPoint
            )
 
 
 
 type alias Model =
-  (GraphSpec, List Audiogram)
+  (GraphSpec, List (List PlotPoint))
     
 type alias Audiogram =
-  { ear : String
-  , conduction : String
+  { ear : Ear
+  , conduction : Conduction
   , data : List DataPoint
   }
 
 type alias DataPoint =
   { frequency : Float
-  , masking : Maybe Bool
+  , masking : Masking
   , level : Int
   }
   
@@ -40,6 +44,31 @@ type alias GraphSpec =
 -- represents height, width, inverted; a GraphSpec with known values
 type alias Spec =
   (Int, Int, Bool)
+
+
+type Ear
+  = Left
+  | Right
+
+type Conduction
+  = Air
+  | Bone
+
+type Masking
+  = Masked
+  | Unmasked
+    
+
+-- represents a point that can be plotted, a data point + audiogram
+-- details with defaults and appropriate casting.
+type alias PlotPoint =
+  { ear : Ear
+  , conduction : Conduction
+  , masking : Masking
+  , level : Int
+  , freq : Float
+  , symbol : String
+  }
     
 -- values used to construct the x-axis part of the grid
 --

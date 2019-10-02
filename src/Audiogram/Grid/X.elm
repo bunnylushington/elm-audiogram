@@ -168,6 +168,8 @@ minorTickOffset majorLabels minorLabels initialTick tickIncrement =
 
     accumulatedMajorTicks =
       (List.length (List.filter (\x -> x < firstMinorTick) majorLabels)) - 1
+
+    
         
   in
     initialTick + (accumulatedMajorTicks * tickIncrement) + (tickIncrement // 2)

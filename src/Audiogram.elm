@@ -32,7 +32,11 @@ import Audiogram.Grid
 
 init : () -> ( Model, Cmd msg )
 init _ =
-  ( Audiogram.DataParser.decode testdata, Cmd.none )
+  let
+    audiogramData =
+      Audiogram.DataParser.decode testdata
+  in
+    (audiogramData, Cmd.none)
 
       
 view : Model -> Html msg
@@ -43,7 +47,7 @@ view (graphSpec, audiogramData) =
   in
     svg [ height (String.fromInt graphHeight)
         , width (String.fromInt graphWidth)
-        , style "border: solid 1px"
+        , style ""
         ]
       ( (majorGraph spec)
          ++ (minorGraph spec)
@@ -70,17 +74,18 @@ main =
 testdata : String
 testdata =
   """
-{ \"width\": 660,
+{ \"width\": 860,
   \"height\": 480,
   \"inverted_level\": true,
 
   \"audiograms\": [
     {
       \"ear\": \"left\",
-      \"conduction\": \"air\",
+      \"conduction\": \"Air\",
       \"data\": [
         {
           \"f\": 0.25,
+          \"m\": true,
           \"db\": 70
         },
         {

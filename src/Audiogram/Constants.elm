@@ -6,6 +6,7 @@ module Audiogram.Constants
            , xAxisLabelY
            , yAxisTickLabelX
            , graphOrigin
+           , markSymbol
            )
 
 import Audiogram.Types exposing (..)
@@ -112,3 +113,16 @@ yAxisParams =
      
      
   
+-- what symbol to draw at a data point, based on ear, conduction, and
+-- masking
+markSymbol : Ear -> Conduction -> Masking -> String
+markSymbol ear conduction masking =
+  case (ear, conduction, masking) of
+    (Right, Air,  Unmasked) -> "&#9675"  -- circle
+    (Right, Air,  Masked)   -> "&#9651"  -- triangle
+    (Left,  Air,  Unmasked) -> "&#10005" -- X
+    (Left,  Air,  Masked)   -> "&#9633"  -- square
+    (Right, Bone, Unmasked) -> "&lt"     -- <
+    (Right, Bone, Masked)   -> "&#8847"  -- [
+    (Left,  Bone, Unmasked) -> "&gt"     -- >
+    (Left,  Bone, Masked)   -> "&#8848"  -- ]

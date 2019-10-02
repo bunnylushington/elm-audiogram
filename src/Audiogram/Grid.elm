@@ -49,6 +49,7 @@ minorGraph ((height, width, isInverted) as spec) =
     X.xAxisSVG st.xTickY1 st.xTickY2 X.minorXAxisLabels spec
 
 
+      
 -- StaticTicks!  (admittedly the name is awful) what we mean here is
 -- that when drawing the xaxis ticks, the y values are static; when
 -- drawing the y axis, the x values are static.  the static values are
