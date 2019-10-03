@@ -1,12 +1,15 @@
 module Audiogram.Constants
-  exposing ( svgGraphSpec
-           , xAxisParams
+  exposing ( xAxisParams
            , yAxisParams
            , axisLabelStyle
            , xAxisLabelY
            , yAxisTickLabelX
            , graphOrigin
            , markSymbol
+           , defaultSvgHeight
+           , defaultSvgWidth
+           , defaultInversion
+               
            )
 
 import Audiogram.Types exposing (..)
@@ -31,17 +34,6 @@ defaultSvgWidth = 660
 defaultInversion : Bool
 defaultInversion =
   False
-
-    
--- Convert a GraphSpec into a Spec, substituting Maybe's for realized
--- values, using the defaults above where the attribute is
--- unspecified.
-svgGraphSpec : GraphSpec -> Spec
-svgGraphSpec spec =
-  ( (Maybe.withDefault defaultSvgHeight spec.height)
-  , (Maybe.withDefault defaultSvgWidth spec.width)
-  , (Maybe.withDefault defaultInversion spec.inverted_level)
-  )
 
 
 -- Since this isn't a general purpose graphing solution and making

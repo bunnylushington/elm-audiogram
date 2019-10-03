@@ -19,8 +19,6 @@ import Audiogram.Types
 import Audiogram.DataParser
   exposing ( decode )
 
-import Audiogram.Constants
-  exposing ( svgGraphSpec )
 
 import Audiogram.Grid
   exposing ( majorGraph
@@ -40,18 +38,14 @@ init _ =
 
       
 view : Model -> Html msg
-view (graphSpec, audiogramData) =
-  let
-    ((graphHeight, graphWidth, isInverted) as spec) =
-      svgGraphSpec(graphSpec)
-  in
-    svg [ height (String.fromInt graphHeight)
-        , width (String.fromInt graphWidth)
-        , style ""
-        ]
-      ( (majorGraph spec)
-         ++ (minorGraph spec)
-      )
+view (((graphHeight, graphWidth, isInverted) as spec), audiogramData) =
+  svg [ height (String.fromInt graphHeight)
+      , width (String.fromInt graphWidth)
+      , style ""
+      ]
+  ( (majorGraph spec)
+      ++ (minorGraph spec)
+  )
 
         
 update : msg -> Model -> ( Model, Cmd msg )

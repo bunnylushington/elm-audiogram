@@ -2,7 +2,6 @@ module Audiogram.Types
   exposing ( Model
            , Audiogram
            , DataPoint
-           , GraphSpec
            , Spec
            , XAxisType (..)
            , XAxisParams
@@ -17,7 +16,7 @@ module Audiogram.Types
 
 
 type alias Model =
-  (GraphSpec, List (List PlotPoint))
+  ( Spec, List (List PlotPoint) )
     
 type alias Audiogram =
   { ear : Ear
@@ -35,12 +34,12 @@ type XAxisType
   = Major (List Float)
   | Minor (List Float)
 
--- used by the JSON parser only    
-type alias GraphSpec =
-  { height: Maybe Int
-  , width: Maybe Int
-  , inverted_level: Maybe Bool
-  }
+-- -- used by the JSON parser only    
+-- type alias GraphSpec =
+--   { height: Maybe Int
+--   , width: Maybe Int
+--   , inverted_level: Maybe Bool
+--   }
 
 -- represents height, width, inverted; a GraphSpec with known values
 type alias Spec =

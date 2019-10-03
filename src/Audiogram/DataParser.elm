@@ -32,7 +32,8 @@ decode jsonString =
     spec =
       case (decodeString graphDecoder jsonString) of
         Ok gspec -> gspec
-        Err _    -> GraphSpec Nothing Nothing Nothing
+        Err _ -> (defaultSvgHeight, defaultSvgWidth, defaultInversion)
+                 
     data =
       case (decodeString audiogramDataDecoder jsonString) of
         Ok adata -> List.map asPlotPoints adata
@@ -40,9 +41,14 @@ decode jsonString =
                     
     _ =
       Debug.log "data: " data
+        
   in                    
     (spec, data)
 
+
+{-- Constructors -----------------------------------------------------------}
+
+      
 -- Convert raw test data to plot data.
 asPlotPoints : Audiogram -> List PlotPoint
 asPlotPoints audiogram =
@@ -74,17 +80,24 @@ dataPointToPlotPoint ear conduction data acc =
           Maybe.withDefault [] (List.tail data)
       in
         dataPointToPlotPoint ear conduction newData newAcc
-                        
-    
 
+
+-- decode the SVG parameters into a spec with default filled in          
+makeSpec : Maybe Int -> Maybe Int -> Maybe Bool -> (Int, Int, Bool)
+makeSpec height width inverted_level =
+  ( (Maybe.withDefault defaultSvgHeight height)
+  , (Maybe.withDefault defaultSvgWidth width)
+  , (Maybe.withDefault defaultInversion inverted_level)
+  )
       
 {-- JSON decoders -----------------------------------------------------------}
-graphDecoder : Decoder GraphSpec
+graphDecoder : Decoder Spec
 graphDecoder =
-  map3 GraphSpec
+  map3 makeSpec
     (field "height" (maybe int))
     (field "width" (maybe int))
     (field "inverted_level" (maybe bool))
+
 
 audiogramDataDecoder : Decoder (List Audiogram)
 audiogramDataDecoder =
