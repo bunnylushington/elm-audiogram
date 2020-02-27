@@ -22,7 +22,7 @@ import Json.Decode as Decode
            , bool)
 
 -- Parse the incoming JSON string and return a Model.  Models comprise
--- two parts, an optional GraphSpec section that defines height,
+-- two parts, an optional Spec section that defines height,
 -- width, and inversion (all of which have defaults if the section is
 -- missing) and the audiogram data.  Audiogram data is a list of
 -- Audiograms or the empty list if the section is missing or invalid.

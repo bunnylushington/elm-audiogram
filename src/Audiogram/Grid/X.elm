@@ -94,7 +94,6 @@ newTickLabel ticks initialTick =
     Just x -> x * 2
 
 
-
 -- xAxisSVG performs two functions: it generates a list of SVG
 -- messages that describe the xaxis (major or minor) tick lines and
 -- labels; it also generates a list of tuples, the XLookupTuple, that
